@@ -1,5 +1,36 @@
 import { useState, useEffect } from 'react'
 
+function Modal({ show, onClose, children }) {
+  return show ? (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl animate-scale-in" onClick={e => e.stopPropagation()}>
+        {children}
+      </div>
+    </div>
+  ) : null
+}
+
+function Toast({ toast }) {
+  return toast ? (
+    <div className="fixed left-1/2 top-4 z-[100] -translate-x-1/2 animate-fade-up">
+      <div className={`flex items-center gap-2 rounded-xl px-5 py-3 shadow-2xl backdrop-blur-xl ${
+        toast.type === 'success' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'
+      }`}>
+        {toast.type === 'success' ? (
+          <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        ) : (
+          <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        )}
+        <span className="text-sm font-semibold">{toast.msg}</span>
+      </div>
+    </div>
+  ) : null
+}
+
 function App() {
   const [nis, setNis] = useState('')
   const [nama, setNama] = useState('')
@@ -30,6 +61,13 @@ function App() {
   const [appSettings, setAppSettings] = useState(() => {
     try { return JSON.parse(localStorage.getItem('appSettings')) || { namaSekolah: 'SMA Negeri 1 Cimahi', emailSekolah: 'sman1cimahi@sch.id' } } catch { return { namaSekolah: 'SMA Negeri 1 Cimahi', emailSekolah: 'sman1cimahi@sch.id' } }
   })
+  const [detailBalasan, setDetailBalasan] = useState('')
+  const [detailPetugas, setDetailPetugas] = useState('')
+  const [detailFotoSebelum, setDetailFotoSebelum] = useState(null)
+  const [detailFotoSebelumPreview, setDetailFotoSebelumPreview] = useState('')
+  const [detailFotoSesudah, setDetailFotoSesudah] = useState(null)
+  const [detailFotoSesudahPreview, setDetailFotoSesudahPreview] = useState('')
+  const [studentDetail, setStudentDetail] = useState(null)
 
   useEffect(() => {
     const saved = localStorage.getItem('pengaduan')
@@ -37,12 +75,12 @@ function App() {
       try { setPengaduanList(JSON.parse(saved)) } catch {}
     } else {
       const dummy = [
-        { id: 1, nama: 'Ahmad Fauzi', nis: '12345', kelas: 'X IPA 1', fasilitas: 'Kelas', deskripsi: 'AC di ruang kelas rusak dan tidak dingin, sudah seminggu tidak diperbaiki. Suhu di kelas sangat panas sehingga mengganggu proses belajar mengajar.', foto: null, status: 'Diproses', tanggal: '28 Mei 2026' },
-        { id: 2, nama: 'Siti Nurhaliza', nis: '12346', kelas: 'XI IPA 2', fasilitas: 'Toilet', deskripsi: 'Toilet lantai 2 kotor dan bau, air tidak mengalir sejak 3 hari lalu. Mohon segera diperbaiki karena sangat mengganggu kenyamanan.', foto: null, status: 'Menunggu', tanggal: '29 Mei 2026' },
-        { id: 3, nama: 'Budi Santoso', nis: '12347', kelas: 'XII IPS 1', fasilitas: 'Perpustakaan', deskripsi: 'Buku-buku referensi untuk persiapan ujian kurang lengkap, terutama untuk mata pelajaran matematika dan fisika.', foto: null, status: 'Selesai', tanggal: '25 Mei 2026' },
-        { id: 4, nama: 'Dewi Lestari', nis: '12348', kelas: 'X IPA 2', fasilitas: 'Kantin', deskripsi: 'Kantin sekolah banyak makanan yang tidak higienis. Beberapa teman saya sakit setelah jajan di kantin.', foto: null, status: 'Ditolak', tanggal: '24 Mei 2026' },
-        { id: 5, nama: 'Rudi Hermawan', nis: '12349', kelas: 'XI IPS 1', fasilitas: 'Lab Komputer', deskripsi: 'Lab komputer hanya ada 10 unit yang berfungsi dari 20 unit. Siswa jadi bergantian dan waktu praktek jadi terbatas.', foto: null, status: 'Menunggu', tanggal: '29 Mei 2026' },
-        { id: 6, nama: 'Ahmad Fauzi', nis: '12345', kelas: 'X IPA 1', fasilitas: 'Lapangan', deskripsi: 'Lapangan basket tidak ada penerangan, jadi tidak bisa dipakai untuk latihan sore.', foto: null, status: 'Selesai', tanggal: '27 Mei 2026' },
+        { id: 1, nama: 'Ahmad Fauzi', nis: '12345', kelas: 'X IPA 1', fasilitas: 'Kelas', deskripsi: 'AC di ruang kelas rusak dan tidak dingin, sudah seminggu tidak diperbaiki. Suhu di kelas sangat panas sehingga mengganggu proses belajar mengajar.', foto: null, status: 'Diproses', tanggal: '28 Mei 2026', petugas: 'Bpk. Dedi', balasan: 'Sedang dalam penanganan teknisi AC.', fotoSebelum: null, fotoSesudah: null },
+        { id: 2, nama: 'Siti Nurhaliza', nis: '12346', kelas: 'XI IPA 2', fasilitas: 'Toilet', deskripsi: 'Toilet lantai 2 kotor dan bau, air tidak mengalir sejak 3 hari lalu. Mohon segera diperbaiki karena sangat mengganggu kenyamanan.', foto: null, status: 'Menunggu', tanggal: '29 Mei 2026', petugas: '', balasan: '', fotoSebelum: null, fotoSesudah: null },
+        { id: 3, nama: 'Budi Santoso', nis: '12347', kelas: 'XII IPS 1', fasilitas: 'Perpustakaan', deskripsi: 'Buku-buku referensi untuk persiapan ujian kurang lengkap, terutama untuk mata pelajaran matematika dan fisika.', foto: null, status: 'Selesai', tanggal: '25 Mei 2026', petugas: 'Ibu Sari', balasan: 'Buku sudah ditambah. Silakan cek ke perpustakaan.', fotoSebelum: null, fotoSesudah: null },
+        { id: 4, nama: 'Dewi Lestari', nis: '12348', kelas: 'X IPA 2', fasilitas: 'Kantin', deskripsi: 'Kantin sekolah banyak makanan yang tidak higienis. Beberapa teman saya sakit setelah jajan di kantin.', foto: null, status: 'Ditolak', tanggal: '24 Mei 2026', petugas: '', balasan: 'Laporan sudah ditindaklanjuti ke UKS.', fotoSebelum: null, fotoSesudah: null },
+        { id: 5, nama: 'Rudi Hermawan', nis: '12349', kelas: 'XI IPS 1', fasilitas: 'Lab Komputer', deskripsi: 'Lab komputer hanya ada 10 unit yang berfungsi dari 20 unit. Siswa jadi bergantian dan waktu praktek jadi terbatas.', foto: null, status: 'Menunggu', tanggal: '29 Mei 2026', petugas: '', balasan: '', fotoSebelum: null, fotoSesudah: null },
+        { id: 6, nama: 'Ahmad Fauzi', nis: '12345', kelas: 'X IPA 1', fasilitas: 'Lapangan', deskripsi: 'Lapangan basket tidak ada penerangan, jadi tidak bisa dipakai untuk latihan sore.', foto: null, status: 'Selesai', tanggal: '27 Mei 2026', petugas: 'Bpk. Dedi', balasan: 'Lampu penerangan sudah dipasang.', fotoSebelum: null, fotoSesudah: null },
       ]
       setPengaduanList(dummy)
       localStorage.setItem('pengaduan', JSON.stringify(dummy))
@@ -50,7 +88,7 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (pengaduanList.length > 0 || localStorage.getItem('pengaduan')) {
+    if (pengaduanList.length > 0) {
       localStorage.setItem('pengaduan', JSON.stringify(pengaduanList))
     }
   }, [pengaduanList])
@@ -58,6 +96,12 @@ function App() {
   useEffect(() => {
     localStorage.setItem('appSettings', JSON.stringify(appSettings))
   }, [appSettings])
+
+  useEffect(() => {
+    if (!nis) { setNama(''); setKelas(''); return }
+    const found = pengaduanList.find(p => p.nis === nis)
+    if (found) { setNama(found.nama); setKelas(found.kelas) } else { setNama(''); setKelas('') }
+  }, [nis, pengaduanList])
 
   useEffect(() => {
     const update = () => setJam(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }))
@@ -103,6 +147,10 @@ function App() {
         foto: fotoPreview || null,
         status: 'Menunggu',
         tanggal: new Date().toLocaleDateString('id-ID'),
+        petugas: '',
+        balasan: '',
+        fotoSebelum: null,
+        fotoSesudah: null,
       },
       ...pengaduanList,
     ])
@@ -142,6 +190,31 @@ function App() {
     showToast('Aspirasi berhasil dihapus!')
   }
 
+  function openDetail(p) {
+    setEditItem(p)
+    setDetailBalasan(p.balasan || '')
+    setDetailPetugas(p.petugas || '')
+    setDetailFotoSebelum(null)
+    setDetailFotoSebelumPreview('')
+    setDetailFotoSesudah(null)
+    setDetailFotoSesudahPreview('')
+    setShowDetail(p)
+  }
+
+  function confirmDetail() {
+    setPengaduanList(pengaduanList.map(item =>
+      item.id === showDetail.id ? {
+        ...item,
+        petugas: detailPetugas,
+        balasan: detailBalasan,
+        fotoSebelum: detailFotoSebelumPreview || item.fotoSebelum,
+        fotoSesudah: detailFotoSesudahPreview || item.fotoSesudah,
+      } : item
+    ))
+    setShowDetail(null)
+    showToast('Data penanganan berhasil disimpan!')
+  }
+
   function statusColor(s) {
     if (s === 'Selesai') return 'border-green-300 bg-green-50 text-green-700 focus:ring-green-400'
     if (s === 'Ditolak') return 'border-red-300 bg-red-50 text-red-700 focus:ring-red-400'
@@ -162,35 +235,6 @@ function App() {
     if (s === 'Diproses') return 'bg-blue-500'
     return 'bg-gray-400'
   }
-
-  const Modal = ({ show, onClose, children }) =>
-    show ? (
-      <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
-        <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl animate-scale-in" onClick={e => e.stopPropagation()}>
-          {children}
-        </div>
-      </div>
-    ) : null
-
-  const Toast = () =>
-    toast ? (
-      <div className="fixed left-1/2 top-4 z-[100] -translate-x-1/2 animate-fade-up">
-        <div className={`flex items-center gap-2 rounded-xl px-5 py-3 shadow-2xl backdrop-blur-xl ${
-          toast.type === 'success' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'
-        }`}>
-          {toast.type === 'success' ? (
-            <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          ) : (
-            <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          )}
-          <span className="text-sm font-semibold">{toast.msg}</span>
-        </div>
-      </div>
-    ) : null
 
   if (adminLoggedIn) {
     const menu = [
@@ -283,49 +327,49 @@ function App() {
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Total</p>
-                        <p className="text-xl font-bold text-gray-900">{pengaduanList.length}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="rounded-xl bg-white p-4 shadow-md shadow-gray-200/50 animate-fade-up relative overflow-hidden" style={{ animationDelay: '0.1s' }}>
-                    <div className="absolute -right-4 -top-4 h-12 w-12 rounded-full bg-gray-500/5" />
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-gray-500 to-slate-600 shadow-sm">
-                        <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Menunggu</p>
-                        <p className="text-xl font-bold text-gray-700">{pengaduanList.filter(p => p.status === 'Menunggu').length}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="rounded-xl bg-white p-4 shadow-md shadow-gray-200/50 animate-fade-up relative overflow-hidden" style={{ animationDelay: '0.15s' }}>
-                    <div className="absolute -right-4 -top-4 h-12 w-12 rounded-full bg-yellow-500/5" />
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-yellow-500 to-amber-600 shadow-sm">
-                        <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Diproses</p>
-                        <p className="text-xl font-bold text-yellow-600">{pengaduanList.filter(p => p.status === 'Diproses').length}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="rounded-xl bg-white p-4 shadow-md shadow-gray-200/50 animate-fade-up relative overflow-hidden" style={{ animationDelay: '0.2s' }}>
-                    <div className="absolute -right-4 -top-4 h-12 w-12 rounded-full bg-green-500/5" />
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 shadow-sm">
-                        <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Selesai</p>
-                        <p className="text-xl font-bold text-green-600">{pengaduanList.filter(p => p.status === 'Selesai').length}</p>
+                         <p className="text-xl font-bold text-gray-900">{pengaduanList.length}</p>
+                       </div>
+                     </div>
+                   </div>
+                   <div className="rounded-xl bg-white p-4 shadow-md shadow-gray-200/50 animate-fade-up relative overflow-hidden" style={{ animationDelay: '0.1s' }}>
+                     <div className="absolute -right-4 -top-4 h-12 w-12 rounded-full bg-gray-500/5" />
+                     <div className="flex items-center gap-3">
+                       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-gray-500 to-slate-600 shadow-sm">
+                         <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                         </svg>
+                       </div>
+                       <div>
+                         <p className="text-xs text-gray-500">Menunggu</p>
+                         <p className="text-xl font-bold text-gray-700">{pengaduanList.filter(p => p.status === 'Menunggu').length}</p>
+                       </div>
+                     </div>
+                   </div>
+                   <div className="rounded-xl bg-white p-4 shadow-md shadow-gray-200/50 animate-fade-up relative overflow-hidden" style={{ animationDelay: '0.15s' }}>
+                     <div className="absolute -right-4 -top-4 h-12 w-12 rounded-full bg-yellow-500/5" />
+                     <div className="flex items-center gap-3">
+                       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-yellow-500 to-amber-600 shadow-sm">
+                         <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                         </svg>
+                       </div>
+                       <div>
+                         <p className="text-xs text-gray-500">Diproses</p>
+                         <p className="text-xl font-bold text-yellow-600">{pengaduanList.filter(p => p.status === 'Diproses').length}</p>
+                       </div>
+                     </div>
+                   </div>
+                   <div className="rounded-xl bg-white p-4 shadow-md shadow-gray-200/50 animate-fade-up relative overflow-hidden" style={{ animationDelay: '0.2s' }}>
+                     <div className="absolute -right-4 -top-4 h-12 w-12 rounded-full bg-green-500/5" />
+                     <div className="flex items-center gap-3">
+                       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 shadow-sm">
+                         <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                         </svg>
+                       </div>
+                       <div>
+                         <p className="text-xs text-gray-500">Selesai</p>
+                         <p className="text-xl font-bold text-green-600">{pengaduanList.filter(p => p.status === 'Selesai').length}</p>
                       </div>
                     </div>
                   </div>
@@ -489,7 +533,7 @@ function App() {
                       return (
                         <div key={p.id} className={`rounded-xl bg-white p-5 shadow-md shadow-gray-200/50 transition-all duration-200 ${locked ? 'opacity-75' : ''}`}>
                           <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setShowDetail(p)}>
+                            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => openDetail(p)}>
                               <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
                                 <span className="font-medium text-gray-500">{p.nama}</span>
                                 <span>&middot;</span>
@@ -499,6 +543,14 @@ function App() {
                               <p className="mt-1 text-sm text-gray-600 line-clamp-2">{p.deskripsi}</p>
                               {p.foto && <img src={p.foto} alt="Bukti" className="mt-2 h-20 w-28 rounded-lg object-cover shadow-sm" />}
                               <p className="mt-2 text-xs text-gray-400">{p.tanggal}</p>
+                              {p.petugas && (
+                                <p className="mt-1 text-xs text-blue-600 font-medium flex items-center gap-1">
+                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                  </svg>
+                                  Petugas: {p.petugas}
+                                </p>
+                              )}
                             </div>
                             <div className="flex items-center gap-2">
                               <select
@@ -789,6 +841,154 @@ function App() {
             </button>
           </div>
         </Modal>
+
+        <Modal show={showDetail} onClose={() => setShowDetail(null)}>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100">
+              <svg className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Detail Penanganan</h3>
+              <p className="text-sm text-gray-500">Kelola tindak lanjut pengaduan</p>
+            </div>
+          </div>
+          <div className="mt-4 max-h-[60vh] space-y-4 overflow-y-auto pr-1">
+            <div className="rounded-xl bg-gray-50 p-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Pelapor</span>
+                <span className="font-semibold text-gray-900">{showDetail?.nama} ({showDetail?.nis})</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Kelas</span>
+                <span className="font-semibold text-gray-900">{showDetail?.kelas}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Fasilitas</span>
+                <span className="font-semibold text-gray-900">{showDetail?.fasilitas}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Tanggal</span>
+                <span className="font-semibold text-gray-900">{showDetail?.tanggal}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Status</span>
+                <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${badgeColor(showDetail?.status)}`}>{showDetail?.status}</span>
+              </div>
+              <div className="pt-2 border-t border-gray-200">
+                <p className="text-xs text-gray-500 mb-1">Deskripsi</p>
+                <p className="text-sm text-gray-900">{showDetail?.deskripsi}</p>
+              </div>
+              {showDetail?.foto && (
+                <div className="pt-2 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">Foto Bukti</p>
+                  <img src={showDetail.foto} alt="Bukti" className="h-32 w-32 rounded-xl object-cover shadow-md" />
+                </div>
+              )}
+              {showDetail?.fotoSebelum && (
+                <div className="pt-2 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">Foto Sebelum</p>
+                  <img src={showDetail.fotoSebelum} alt="Sebelum" className="h-32 w-32 rounded-xl object-cover shadow-md" />
+                </div>
+              )}
+              {showDetail?.fotoSesudah && (
+                <div className="pt-2 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">Foto Sesudah</p>
+                  <img src={showDetail.fotoSesudah} alt="Sesudah" className="h-32 w-32 rounded-xl object-cover shadow-md" />
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Petugas</label>
+              <input
+                type="text"
+                value={detailPetugas}
+                onChange={e => setDetailPetugas(e.target.value)}
+                className="mt-1.5 block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm shadow-sm transition-all duration-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/20"
+                placeholder="Nama petugas penanggung jawab"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Feedback / Deskripsi Tindak Lanjut</label>
+              <textarea
+                value={detailBalasan}
+                onChange={e => setDetailBalasan(e.target.value)}
+                rows={3}
+                className="mt-1.5 block w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm shadow-sm transition-all duration-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/20 resize-none"
+                placeholder="Jelaskan tindak lanjut yang dilakukan..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Foto Sebelum Perbaikan</label>
+              <div className="mt-1.5 flex items-center gap-4">
+                <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-600 shadow-sm transition-all duration-200 hover:border-gray-300 hover:bg-gray-100">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Pilih Foto
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={e => {
+                      const file = e.target.files[0]
+                      if (file) {
+                        setDetailFotoSebelum(file)
+                        const reader = new FileReader()
+                        reader.onload = ev => setDetailFotoSebelumPreview(ev.target.result)
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+              {detailFotoSebelumPreview && (
+                <div className="mt-3">
+                  <img src={detailFotoSebelumPreview} alt="Preview Sebelum" className="h-24 w-24 rounded-xl object-cover shadow-md" />
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Foto Sesudah Perbaikan</label>
+              <div className="mt-1.5 flex items-center gap-4">
+                <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-600 shadow-sm transition-all duration-200 hover:border-gray-300 hover:bg-gray-100">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Pilih Foto
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={e => {
+                      const file = e.target.files[0]
+                      if (file) {
+                        setDetailFotoSesudah(file)
+                        const reader = new FileReader()
+                        reader.onload = ev => setDetailFotoSesudahPreview(ev.target.result)
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+              {detailFotoSesudahPreview && (
+                <div className="mt-3">
+                  <img src={detailFotoSesudahPreview} alt="Preview Sesudah" className="h-24 w-24 rounded-xl object-cover shadow-md" />
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="mt-5 flex gap-3">
+            <button onClick={() => setShowDetail(null)} className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-all duration-200 hover:bg-gray-100">
+              Tutup
+            </button>
+            <button onClick={confirmDetail} className="flex-1 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-[1.02] active:scale-[0.98]">
+              Simpan
+            </button>
+          </div>
+        </Modal>
       </div>
     )
   }
@@ -797,7 +997,7 @@ function App() {
     return (
       <div className="relative min-h-screen overflow-hidden">
         <video autoPlay loop muted playsInline className="absolute inset-0 h-full w-full object-cover">
-          <source src="/bg-video/video.mp4" type="video/mp4" />
+          <source src="./bg-video/video.mp4" type="video/mp4" />
         </video>
         <div className="absolute inset-0 bg-black/60" />
         <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4">
@@ -857,7 +1057,7 @@ function App() {
           <div className="absolute left-1/2 top-1/3 h-64 w-64 rounded-full bg-purple-400/10 blur-3xl animate-blob" style={{ animationDelay: '8s' }} />
         </div>
 
-        <Toast />
+        <Toast toast={toast} />
 
         <header className="sticky top-0 z-50 border-b border-white/20 bg-white/70 backdrop-blur-xl">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
@@ -878,7 +1078,7 @@ function App() {
                 <p className="text-sm font-semibold text-gray-900">{jam}</p>
                 <p className="text-xs text-gray-500">{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
               </div>
-              <button onClick={() => setLoggedIn(false)} className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-red-500 to-rose-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-red-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-red-500/30 hover:scale-[1.02] active:scale-[0.98]">
+              <button onClick={() => { setLoggedIn(false); setNis(''); setNama(''); setKelas('') }} className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-red-500 to-rose-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-red-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-red-500/30 hover:scale-[1.02] active:scale-[0.98]">
                 Logout
               </button>
             </div>
@@ -897,7 +1097,7 @@ function App() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Total</p>
-                  <p className="text-xl font-bold text-gray-900">{pengaduanList.length}</p>
+                  <p className="text-xl font-bold text-gray-900">{pengaduanList.filter(p => p.nis === nis).length}</p>
                 </div>
               </div>
             </div>
@@ -911,7 +1111,7 @@ function App() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Menunggu</p>
-                  <p className="text-xl font-bold text-gray-700">{pengaduanList.filter(p => p.status === 'Menunggu').length}</p>
+                  <p className="text-xl font-bold text-gray-700">{pengaduanList.filter(p => p.nis === nis && p.status === 'Menunggu').length}</p>
                 </div>
               </div>
             </div>
@@ -925,7 +1125,7 @@ function App() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Diproses</p>
-                  <p className="text-xl font-bold text-yellow-600">{pengaduanList.filter(p => p.status === 'Diproses').length}</p>
+                  <p className="text-xl font-bold text-yellow-600">{pengaduanList.filter(p => p.nis === nis && p.status === 'Diproses').length}</p>
                 </div>
               </div>
             </div>
@@ -939,7 +1139,7 @@ function App() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Selesai</p>
-                  <p className="text-xl font-bold text-green-600">{pengaduanList.filter(p => p.status === 'Selesai').length}</p>
+                  <p className="text-xl font-bold text-green-600">{pengaduanList.filter(p => p.nis === nis && p.status === 'Selesai').length}</p>
                 </div>
               </div>
             </div>
@@ -1003,7 +1203,9 @@ function App() {
                           const file = e.target.files[0]
                           if (file) {
                             setFoto(file)
-                            setFotoPreview(URL.createObjectURL(file))
+                            const reader = new FileReader()
+                            reader.onload = ev => setFotoPreview(ev.target.result)
+                            reader.readAsDataURL(file)
                           }
                         }}
                       />
@@ -1038,9 +1240,9 @@ function App() {
                   </svg>
                 </div>
                 <h2 className="text-xl font-bold text-gray-900">Riwayat Aspirasi</h2>
-                {pengaduanList.length > 0 && (
+                {pengaduanList.filter(p => p.nis === nis).length > 0 && (
                   <span className="rounded-full bg-blue-100 px-3 py-0.5 text-xs font-semibold text-blue-700">
-                    {pengaduanList.length}
+{pengaduanList.filter(p => p.nis === nis).length}
                   </span>
                 )}
               </div>
@@ -1059,8 +1261,10 @@ function App() {
             </div>
             {(() => {
               const filtered = pengaduanList.filter(p =>
-                p.fasilitas.toLowerCase().includes(search.toLowerCase()) ||
-                p.deskripsi.toLowerCase().includes(search.toLowerCase())
+                p.nis === nis && (
+                  p.fasilitas.toLowerCase().includes(search.toLowerCase()) ||
+                  p.deskripsi.toLowerCase().includes(search.toLowerCase())
+                )
               )
               return filtered.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-white/50 px-6 py-16 text-center">
@@ -1081,7 +1285,8 @@ function App() {
                   {filtered.map((p, i) => (
                     <div
                       key={p.id}
-                      className="group relative overflow-hidden rounded-xl bg-white p-5 shadow-md shadow-gray-200/50 transition-all duration-300 hover:shadow-xl hover:shadow-gray-200/70 hover:-translate-y-0.5 animate-fade-up"
+                      onClick={() => setStudentDetail(p)}
+                      className="cursor-pointer group relative overflow-hidden rounded-xl bg-white p-5 shadow-md shadow-gray-200/50 transition-all duration-300 hover:shadow-xl hover:shadow-gray-200/70 hover:-translate-y-0.5 animate-fade-up"
                       style={{ animationDelay: `${i * 0.05}s` }}
                     >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -1142,6 +1347,75 @@ function App() {
             );})()}
           </div>
         </main>
+
+        <Modal show={studentDetail} onClose={() => setStudentDetail(null)}>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+              <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Detail Aspirasi</h3>
+              <p className="text-sm text-gray-500">Informasi lengkap aspirasi kamu</p>
+            </div>
+          </div>
+          <div className="mt-4 max-h-[60vh] space-y-4 overflow-y-auto pr-1">
+            <div className="rounded-xl bg-gray-50 p-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Fasilitas</span>
+                <span className="font-semibold text-gray-900">{studentDetail?.fasilitas}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Tanggal</span>
+                <span className="font-semibold text-gray-900">{studentDetail?.tanggal}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Status</span>
+                <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${badgeColor(studentDetail?.status)}`}>{studentDetail?.status}</span>
+              </div>
+              <div className="pt-2 border-t border-gray-200">
+                <p className="text-xs text-gray-500 mb-1">Deskripsi</p>
+                <p className="text-sm text-gray-900">{studentDetail?.deskripsi}</p>
+              </div>
+              {studentDetail?.foto && (
+                <div className="pt-2 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">Foto Bukti</p>
+                  <img src={studentDetail.foto} alt="Bukti" className="h-32 w-32 rounded-xl object-cover shadow-md" />
+                </div>
+              )}
+              {studentDetail?.petugas && (
+                <div className="pt-2 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">Petugas</p>
+                  <p className="text-sm font-medium text-blue-600">{studentDetail.petugas}</p>
+                </div>
+              )}
+              {studentDetail?.balasan && (
+                <div className="pt-2 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">Feedback</p>
+                  <p className="text-sm text-blue-900">{studentDetail.balasan}</p>
+                </div>
+              )}
+              {studentDetail?.fotoSebelum && (
+                <div className="pt-2 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">Foto Sebelum</p>
+                  <img src={studentDetail.fotoSebelum} alt="Sebelum" className="h-32 w-32 rounded-xl object-cover shadow-md" />
+                </div>
+              )}
+              {studentDetail?.fotoSesudah && (
+                <div className="pt-2 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">Foto Sesudah</p>
+                  <img src={studentDetail.fotoSesudah} alt="Sesudah" className="h-32 w-32 rounded-xl object-cover shadow-md" />
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="mt-5">
+            <button onClick={() => setStudentDetail(null)} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-all duration-200 hover:bg-gray-100">
+              Tutup
+            </button>
+          </div>
+        </Modal>
 
         <Modal show={showModal} onClose={() => setShowModal(false)}>
           <div className="flex items-center gap-3">
@@ -1263,7 +1537,7 @@ function App() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       <video autoPlay loop muted playsInline className="absolute inset-0 h-full w-full object-cover">
-        <source src="/bg-video/video.mp4" type="video/mp4" />
+        <source src="./bg-video/video.mp4" type="video/mp4" />
       </video>
       <div className="absolute inset-0 bg-black/60" />
 
